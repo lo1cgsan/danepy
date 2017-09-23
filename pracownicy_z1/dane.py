@@ -6,7 +6,7 @@ import sqlite3
 
 def dane_z_pliku(plik):
     """
-    Zwraca wiersze z pliku csv w postaci listy list
+    Zwraca wiersze z pliku csv w postaci listy list (rekordów)
     """
     dane = []
     with open(plik, newline='') as plikcsv:
@@ -18,23 +18,29 @@ def dane_z_pliku(plik):
 
 def wyczysc_dane(dane, pole):
     """
+    Przygotowanie wartości finansowych do zapisania w bazie
     @param: dane – lista rekordów, pole – numer pola do oczyszczenia
     """
     for i, rekord in enumerate(dane):
         el = rekord[pole]
-        el = el.replace('zł','')  # usuń zł
-        el = el.replace(' ','')  # usun spacje
-        el = el.replace(',','.')  # usun spacje
-        # d[5] = float(liczba)
-        dane[i][pole] = float(el)
+        el = el.replace('zł', '')  # usuń zł
+        el = el.replace(' ', '')  # usun spacje
+        el = el.replace(',', '.')  # zamien przecinki na kropki
+        dane[i][pole] = el
     return dane
 
 
-def wylicz_premie(dane, stawki):
-    for i, l in enumerate(dane):
-        p = l[5] * stawki[l[3]]
-        l.insert(6, p)
-        dane[i] = l
+def wstaw_premie(dane, stawki=None):
+    """
+    Wstawia wartość dla pola premia w tabeli pracownicy
+    @params: dane – lista rekordów, stawki – tabela premia
+    """
+    premia = ""
+    for i, row in enumerate(dane):
+        if stawki:
+            premia = float(row[5]) * float(stawki[row[3]])
+        row.insert(6, premia)
+        dane[i] = row
     return dane
 
 
@@ -43,17 +49,13 @@ premia = dane_z_pliku('premia.txt')
 premia = wyczysc_dane(premia, 1)
 pracownicy = dane_z_pliku('pracownicy.txt')
 pracownicy = wyczysc_dane(pracownicy, 5)
-pracownicy = wylicz_premie(pracownicy, stawki = dict(premia))
+# pracownicy = wstaw_premie(pracownicy, stawki=dict(premia))
+pracownicy = wstaw_premie(pracownicy)
 
-# utworzenie połączenia z bazą przechowywaną na dysku
-# lub w pamięci (':memory:')
-con = sqlite3.connect('pracownicy.sql')
 
-# dostęp do kolumn przez indeksy i przez nazwy
-con.row_factory = sqlite3.Row
-
-# utworzenie obiektu kursora
-cur = con.cursor()
+# połączenie z bazą w pliku lub w pamięci (':memory:')
+con = sqlite3.connect('pracownicy.sqlite3')
+cur = con.cursor()  # utworzenie obiektu kursora
 
 # tworzenie tabel
 cur.executescript("""
@@ -62,22 +64,15 @@ cur.executescript("""
         id INTEGER PRIMARY KEY,
         nazwa varchar(20) NOT NULL,
         siedziba varchar(20) NOT NULL
-    )""")
+    );
 
-cur.executemany('INSERT INTO dzial VALUES(?,?,?)', dzial)
-
-cur.executescript("""
     DROP TABLE IF EXISTS premia;
     CREATE TABLE IF NOT EXISTS premia (
         id varchar(20) PRIMARY KEY,
         premia NUMERIC
-    )""")
+    );
 
-cur.executemany('INSERT INTO premia VALUES(?,?)', premia)
-
-cur.execute("DROP TABLE IF EXISTS pracownicy;")
-
-cur.execute("""
+    DROP TABLE IF EXISTS pracownicy;
     CREATE TABLE IF NOT EXISTS pracownicy (
         id varchar(6) PRIMARY KEY,
         nazwisko varchar(20) NOT NULL,
@@ -89,36 +84,12 @@ cur.execute("""
         id_dzial INTEGER NOT NULL,
         FOREIGN KEY(stanowisko) REFERENCES premia(id),
         FOREIGN KEY(id_dzial) REFERENCES dzial(id)
-    )""")
+    );
+    """)
 
+
+# wstawiamy dane
+cur.executemany('INSERT INTO dzial VALUES(?,?,?)', dzial)
+cur.executemany('INSERT INTO premia VALUES(?,?)', premia)
 cur.executemany('INSERT INTO pracownicy VALUES(?,?,?,?,?,?,?,?)', pracownicy)
-# wstawiamy wiele rekordów
-
-# c)
-cur.execute("""
-    SELECT dzial.siedziba, sum(pracownicy.placa) as total
-    FROM dzial, pracownicy
-    WHERE pracownicy.id_dzial=dzial.id
-    GROUP BY dzial.siedziba
-    ORDER BY total ASC
-    """)
-wyniki = cur.fetchall()
-for siedziba, total in wyniki:
-    print(siedziba, total)
-
-# d)
-cur.execute("""
-    SELECT dzial.id, dzial.nazwa, pracownicy.nazwisko, pracownicy.imie
-    FROM dzial, pracownicy
-    WHERE pracownicy.id_dzial=dzial.id
-    ORDER BY dzial.nazwa ASC
-    """)
-wyniki = cur.fetchall()
-for id, nazwa, nazwisko, imie in wyniki:
-    print(id, nazwa, nazwisko, imie)
-
 con.commit()
-
-
-# print(pracownicy)
-# print(premia)
