@@ -101,3 +101,7 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+
+# baza danych sqlite3
+*.sqlite3
+*.db
