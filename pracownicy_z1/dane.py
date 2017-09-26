@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import csv  # moduł do obsługi formatu csv
-import sqlite3
 
 
 def dane_z_pliku(plik):
@@ -9,7 +8,7 @@ def dane_z_pliku(plik):
     Zwraca wiersze z pliku csv w postaci listy list (rekordów)
     """
     dane = []
-    with open(plik, newline='') as plikcsv:
+    with open(plik, newline='', encoding='utf-8') as plikcsv:
         tresc = csv.reader(plikcsv, delimiter='\t')
         for lista in tresc:
             dane.append(lista)
