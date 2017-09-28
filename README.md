@@ -5,5 +5,5 @@ Zobacz:
 - [Baza SQLite3](https://www.sqlite.org/)
 - Python101 – [Bazy danych w Pythonie](http://python101.rtfd.io)
 
-[Materiał startowy](dane_start.zip)
+[Materiał startowy](https://drive.google.com/open?id=0B24yoSHtTDq2RmhvZ0EtNFlJU2s)
 
