@@ -54,32 +54,3 @@ with baza.atomic():
         Pracownik.insert_many(pracownicy[idx:idx + 100]).execute()
 
 # zob. http://docs.peewee-orm.com/en/latest/peewee/querying.html#bulk-inserts
-
-
-def kw_c():
-    query = (Dzial
-             .select(Dzial.siedziba, fn.Sum(Pracownik.placa).alias('place'))
-             .join(Pracownik)
-             .group_by(Dzial.siedziba)
-             .order_by('place').asc())
-
-    for row in query:
-        print(row.siedziba, row.place)
-
-
-def kw_d():
-    query = (Pracownik
-             .select(Dzial.id, Dzial.nazwa, Pracownik.nazwisko, Pracownik.imie)
-             .join(Dzial)
-             .order_by(Dzial.nazwa).asc())
-
-    for row in query:
-        print(row.id_dzial.id, row.id_dzial.nazwa, row.nazwisko, row.imie)
-
-
-query = (Pracownik
-         .select()
-         .where(Pracownik.imie.endswith('a')))
-for row in query:
-    print(row.imie)
-# zob.: https://stackoverflow.com/questions/20589462/string-matching-in-peewee-sql
