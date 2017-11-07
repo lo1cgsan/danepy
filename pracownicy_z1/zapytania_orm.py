@@ -83,6 +83,28 @@ def kw_g():
         (Pracownik.data_zatr.year).alias('rok')))
 
     for obj in query:
-        print(datetime.now().year - int(obj.rok))
+        print(obj.imie,
+              obj.nazwisko,
+              obj.stanowisko.id,
+              datetime.now().year - int(obj.rok))
 
-kw_g()
+
+def kw_h():
+    """Kwerenda wybiera imię, nazwisko, stanowisko, siedzibę pracownika"""
+    query = (Pracownik
+            .select()
+            .join(Premia))
+
+    for obj in query:
+        print(obj.imie, obj.nazwisko, obj.stanowisko.id, obj.id_dzial.siedziba)
+
+
+def kw_i():
+    """Kwerenda liczy liczbę pracowników zatrudnionych w każdym dziale"""
+    query = (Pracownik
+            .select(Pracownik.id_dzial, fn.count(Pracownik.id).alias('ilu'))
+            .join(Dzial)
+            .group_by(Dzial.siedziba))
+
+    for obj in query:
+        print(obj.id_dzial.siedziba, obj.ilu)
